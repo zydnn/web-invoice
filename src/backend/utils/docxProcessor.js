@@ -6,13 +6,11 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
 const os = require('os');
-const inputPath = 'C:\\Users\Marke\\Documents\\docx-pdf-generator-main\\src\\templates\\invoice-template.docx'; // <- ini nanti diganti sama file DOCX dari template
-const outputDir = 'C:\\Users\\Marke\\Documents\\docx-pdf-generator-main\\src\\outputs'; // <- folder tempat hasil PD
-
+const inputPath = 'C:\\Users\\marke\\Documents\\zydnn.github.io\\src\\templates\\invoice-template.docx'; // <- ini nanti diganti sama file DOCX dari template
+const outputDir = 'C:\\Users\\marke\\Documents\\zydnn.github.io\\src\\outputs'; // <- folder tempat hasil PD
 const execAsync = promisify(exec);
 
 // Process DOCX template with data injection
-
 async function processDocxTemplate(templateData, templatePath) {
   try {
     // Read the template file
@@ -71,7 +69,7 @@ async function convertDocxToPdf(docxBuffer) {
   // Tulis buffer DOCX ke file sementara
 await fs.writeFile(tempDocxPath, docxBuffer);
 
-  const command = `"C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe" --headless --convert-to pdf --outdir "${outputDir}" "${tempDocxPath}"`;
+  const command = `"C:\\Program Files\\LibreOffice\\program\\soffice.exe" --headless --convert-to pdf --outdir "${outputDir}" "${tempDocxPath}"`;
   await execAsync(command);
 
   // Cek PDF-nya pake expected name
