@@ -16,7 +16,7 @@ Lo pernah males bikin invoice manual di Word terus copy–paste data berkali-kal
 1. Clone dulu repo ini ke laptop lo:
 
    ```bash
-   git clone https://github.com/username/repo-name.git
+   git clone https://github.com/zydnn/zydnn.github.io
    cd repo-name
    ```
 2. Install dependency (jangan lupa Node.js udah kepasang ya):
@@ -27,12 +27,13 @@ Lo pernah males bikin invoice manual di Word terus copy–paste data berkali-kal
 3. Jalanin backend:
 
    ```bash
-   npm run server
+   cd src/backend
+   npm run dev
    ```
 4. Jalanin frontend:
 
    ```bash
-   npm run client
+   npm run dev
    ```
 5. Buka di browser: [http://localhost:3000](http://localhost:3000)
    🎉 Done! Lo udah bisa generate invoice.

@@ -1,4 +1,3 @@
-
 # Invoice Generator Backend
 
 A Node.js/Express backend for generating PDF invoices from DOCX templates.
