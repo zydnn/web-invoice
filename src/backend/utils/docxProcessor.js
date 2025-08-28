@@ -5,7 +5,7 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
 const os = require('os');
-const outputDir = 'C:\\Users\\marke\\Documents\\zydnn.github.io\\src\\outputs'; // <- folder tempat hasil PD
+const outputDir = 'C:\\Users\\marke\\Documents\\web-invoice\\src\\outputs'; // <- Ganti nama folder sesuai kebutuhan.
 const execAsync = promisify(exec);
 
 // Process DOCX template with data injection
