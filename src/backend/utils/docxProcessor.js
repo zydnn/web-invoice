@@ -1,4 +1,3 @@
-
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
 const fs = require('fs').promises;
@@ -6,7 +5,6 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
 const os = require('os');
-const inputPath = 'C:\\Users\\marke\\Documents\\zydnn.github.io\\src\\templates\\invoice-template.docx'; // <- ini nanti diganti sama file DOCX dari template
 const outputDir = 'C:\\Users\\marke\\Documents\\zydnn.github.io\\src\\outputs'; // <- folder tempat hasil PD
 const execAsync = promisify(exec);
 
@@ -69,6 +67,7 @@ async function convertDocxToPdf(docxBuffer) {
   // Tulis buffer DOCX ke file sementara
 await fs.writeFile(tempDocxPath, docxBuffer);
 
+  // Selalu Error karna path-nya ga jelas
   const command = `"C:\\Program Files\\LibreOffice\\program\\soffice.exe" --headless --convert-to pdf --outdir "${outputDir}" "${tempDocxPath}"`;
   await execAsync(command);
 
@@ -89,7 +88,6 @@ await fs.writeFile(tempDocxPath, docxBuffer);
   
   // Buat direktori output jika belum ada
   await fs.mkdir(outputDir, { recursive: true });
-
   throw new Error('PDF tidak ter-create!');
 }
 
