@@ -16,8 +16,8 @@ Lo pernah males bikin invoice manual di Word terus copy–paste data berkali-kal
 1. Clone dulu repo ini ke laptop lo:
 
    ```bash
-   git clone https://github.com/zydnn/zydnn.github.io
-   cd repo-name
+   git clone https://github.com/zydnn/web-invoice
+   cd web-invoice
    ```
 2. Install dependency (jangan lupa Node.js udah kepasang ya):
 
