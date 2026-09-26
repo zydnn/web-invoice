@@ -5,7 +5,7 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
 const os = require('os');
-const outputDir = 'C:\\Users\\marke\\Documents\\web-invoice\\src\\outputs'; // <- Ganti nama folder sesuai kebutuhan.
+const outputDir = 'C:\\Users\\zidan\\Documents\\web-invoice\\src\\outputs'; // <- Change Folders Path.
 const execAsync = promisify(exec);
 
 // Process DOCX template with data injection
@@ -59,15 +59,15 @@ async function processDocxTemplate(templateData, templatePath) {
 // Convert DOCX buffer to PDF using LibreOffice headless mode
 async function convertDocxToPdf(docxBuffer) {
   const tempDir = os.tmpdir();
-  const tempDocxName = `invoice-${Date.now()}.docx`; // Kasih nama yang jelas
+  const tempDocxName = `invoice-${Date.now()}.docx`; // Give it a clear name
   const tempDocxPath = path.join(tempDir, tempDocxName);
-  const expectedPdfName = `invoice-${Date.now()}.pdf`; // Nama PDF yang diharapkan
+  const expectedPdfName = `invoice-${Date.now()}.pdf`; // Expected PDF name
   const expectedPdfPath = path.join(outputDir, expectedPdfName);
 
-  // Tulis buffer DOCX ke file sementara
+  // Write DOCX buffer to a temporary file
 await fs.writeFile(tempDocxPath, docxBuffer);
 
-  // Selalu Error karna path-nya ga jelas
+  // MAKE SURE LibreOffice is installed and accessible in the system PATH
   const command = `"C:\\Program Files\\LibreOffice\\program\\soffice.exe" --headless --convert-to pdf --outdir "${outputDir}" "${tempDocxPath}"`;
   await execAsync(command);
 
