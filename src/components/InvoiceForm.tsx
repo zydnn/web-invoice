@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Download } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { convertToIndonesianWords, formatCurrency } from '@/utils/numberToWords';
+import { convertToIndonesianWords } from '@/utils/numberToWords';
 
+// ---------- Schemas ----------
 const itemSchema = z.object({
   name: z.string().min(1, 'Item name is required'),
   quantity: z.number().min(1, 'Quantity must be at least 1'),
@@ -31,19 +32,22 @@ const invoiceSchema = z.object({
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
+// ---------- Component ----------
 const InvoiceForm = () => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const { toast } = useToast();
-  
+
   const {
     register,
     control,
     handleSubmit,
     watch,
     setValue,
-    formState: { errors }
+    formState: { errors },
   } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
+    mode: 'onBlur', // validate on blur for real-time feedback
     defaultValues: {
       tanggal: format(new Date(), 'yyyy-MM-dd'),
       noItems: [{ name: '', quantity: 1, price: 0 }],
@@ -59,7 +63,7 @@ const InvoiceForm = () => {
   const watchedItems = watch('noItems');
   const watchedOngkir = watch('ongkir') || 0;
 
-  // Calculate subtotal and total
+  // ---------- Calculations ----------
   const subtotal = watchedItems?.reduce((acc, item) => {
     return acc + (item.quantity || 0) * (item.price || 0);
   }, 0) || 0;
@@ -67,12 +71,22 @@ const InvoiceForm = () => {
   const total = subtotal + watchedOngkir;
   const totalTerbilang = convertToIndonesianWords(total);
 
+  // ---------- Helpers ----------
+  const handleAddItem = () => {
+    append({ name: '', quantity: 1, price: 0 });
+  };
+
+  const handleRemoveItem = (index: number) => {
+    if (fields.length <= 1) return;
+    remove(index);
+  };
+
+  // ---------- Submit ----------
   const onSubmit = async (data: InvoiceFormData) => {
+    setSubmissionError(null);
     setIsGenerating(true);
-    console.log('Submitting form data:', data);
-    
+
     try {
-      // Prepare data for backend
       const invoiceData = {
         pelanggan: data.pelanggan,
         tanggal: data.tanggal,
@@ -81,46 +95,31 @@ const InvoiceForm = () => {
         alamatSewa: data.alamatSewa,
         noItems: data.noItems,
         ongkir: data.ongkir || 0,
-        keterangan: data.keterangan || ''
+        keterangan: data.keterangan || '',
       };
 
-      console.log('Sending data to backend:', invoiceData);
-
-      // Call backend API
       const response = await fetch('http://localhost:3000/api/invoices/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invoiceData),
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API Error:', errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      // Handle PDF download
       const blob = await response.blob();
-      console.log('PDF blob size:', blob.size);
-      
       if (blob.size === 0) {
         throw new Error('Received empty PDF file');
       }
 
-      // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `invoice-${data.invoiceNo}.pdf`;
       document.body.appendChild(a);
       a.click();
-      
-      // Cleanup
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
@@ -128,15 +127,13 @@ const InvoiceForm = () => {
         title: 'Success!',
         description: 'Invoice PDF has been generated and downloaded.',
       });
-
     } catch (error) {
-      console.error('Error generating invoice:', error);
+      const message = error instanceof Error ? error.message : 'Failed to generate invoice. Please check your backend connection.';
+      setSubmissionError(message);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error instanceof Error 
-          ? error.message 
-          : 'Failed to generate invoice. Please check your backend connection.',
+        description: message,
       });
     } finally {
       setIsGenerating(false);
@@ -150,9 +147,9 @@ const InvoiceForm = () => {
           Invoice
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Customer Information */}
+          {/* Customer Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="pelanggan">Nama Costumer *</Label>
@@ -203,6 +200,7 @@ const InvoiceForm = () => {
             </div>
           </div>
 
+          {/* Alamat Sewa */}
           <div>
             <Label htmlFor="alamatSewa">Alamat Sewa *</Label>
             <Textarea
@@ -270,8 +268,8 @@ const InvoiceForm = () => {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => remove(index)}
-                      disabled={fields.length === 1}
+                      onClick={() => handleRemoveItem(index)}
+                      disabled={fields.length <= 1}
                       className="w-full"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -283,7 +281,7 @@ const InvoiceForm = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ name: '', quantity: 1, price: 0 })}
+                onClick={handleAddItem}
                 className="w-full"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -338,10 +336,17 @@ const InvoiceForm = () => {
             </CardContent>
           </Card>
 
+          {/* Global submission error */}
+          {submissionError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm">{submissionError}</p>
+            </div>
+          )}
+
           {/* Submit Button */}
           <div className="flex justify-center pt-6">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full md:w-auto px-8 py-3 text-lg"
               disabled={isGenerating}
             >
