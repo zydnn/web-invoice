@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { convertToIndonesianWords } from '@/utils/numberToWords';
+import { useInvoicePersist } from '@/hooks/useInvoicePersist';
 
 // ---------- Schemas ----------
 const itemSchema = z.object({
@@ -37,6 +38,7 @@ const InvoiceForm = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { saveDraft, restoreDraft, clearDraft } = useInvoicePersist();
 
   const {
     register,
@@ -47,7 +49,7 @@ const InvoiceForm = () => {
     formState: { errors },
   } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
-    mode: 'onBlur', // validate on blur for real-time feedback
+    mode: 'onBlur',
     defaultValues: {
       tanggal: format(new Date(), 'yyyy-MM-dd'),
       noItems: [{ name: '', quantity: 1, price: 0 }],
@@ -55,15 +57,31 @@ const InvoiceForm = () => {
     }
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'noItems',
-  });
+  // Restore draft on mount
+    useEffect(() => {
+      const restored = restoreDraft();
+      if (restored) {
+        Object.entries(restored).forEach(([key, value]) => {
+          setValue(key as keyof InvoiceFormData, value);
+        });
+      }
+    }, []);
 
-  const watchedItems = watch('noItems');
-  const watchedOngkir = watch('ongkir') || 0;
+    const { fields, append, remove } = useFieldArray({
+      control,
+      name: 'noItems',
+    });
 
-  // ---------- Calculations ----------
+    const watchedItems = watch('noItems');
+    const watchedOngkir = watch('ongkir') || 0;
+
+    // Auto-save draft on form change
+    const watchedData = watch();
+    useEffect(() => {
+      saveDraft(watchedData);
+    }, [watchedData, saveDraft]);
+
+    // ---------- Calculations ----------
   const subtotal = watchedItems?.reduce((acc, item) => {
     return acc + (item.quantity || 0) * (item.price || 0);
   }, 0) || 0;
@@ -136,8 +154,9 @@ const InvoiceForm = () => {
         description: message,
       });
     } finally {
-      setIsGenerating(false);
-    }
+          setIsGenerating(false);
+          clearDraft();
+        }
   };
 
   return (
